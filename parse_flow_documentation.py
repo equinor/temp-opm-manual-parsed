@@ -54,8 +54,10 @@ for child in root.findall(
 
     if link in keyword_links:
         sibling = child.getparent().getnext()
-        keyword_links[link]["long_description"] = " ".join(
-            [t.strip() for t in sibling.getnext().getnext().itertext()]
+        keyword_links[link]["long_description"] = "".join(
+            [t for t in sibling.getnext().getnext().itertext()]
         )
 
-Path("eclipse_keyword_documentation.json").write_text(json.dumps(list(keyword_links.values()),indent=4))
+Path("eclipse_keyword_documentation.json").write_text(
+    json.dumps(list(keyword_links.values()), indent=4)
+)
