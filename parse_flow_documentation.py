@@ -32,6 +32,11 @@ def belongs_to_keyword_section(toc_entry: str) -> Optional[str]:
             return section
 
 
+def concatenate_text(element) -> str:
+    """Iterates trough child elements and concatenates text"""
+    return "".join([t for t in element.itertext()])
+
+
 keyword_links = {}
 for child in root.findall(".//*{urn:oasis:names:tc:opendocument:xmlns:text:1.0}a"):
     section = belongs_to_keyword_section(child.text) if child.text else None
@@ -53,10 +58,15 @@ for child in root.findall(
     link = child.attrib["{urn:oasis:names:tc:opendocument:xmlns:text:1.0}name"]
 
     if link in keyword_links:
-        sibling = child.getparent().getnext()
-        keyword_links[link]["long_description"] = "".join(
-            [t for t in sibling.getnext().getnext().itertext()]
-        )
+        description_node = child.getparent().getnext()
+        if description_node.tag != "{urn:oasis:names:tc:opendocument:xmlns:text:1.0}p":
+            # Some keywords have a table element before the description paragraph... go to next sibling element in these cases
+            description_node = description_node.getnext()
+        if concatenate_text(description_node) == "Description":
+            # Some keywords have a sibling element with title "Description"
+            description_node = description_node.getnext()
+
+        keyword_links[link]["long_description"] = concatenate_text(description_node)
 
 Path("eclipse_keyword_documentation.json").write_text(
     json.dumps(list(keyword_links.values()), indent=4)
